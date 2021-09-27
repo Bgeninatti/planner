@@ -3,7 +3,7 @@ from itertools import chain
 import pytest
 from tests.factories import TasksFactory
 
-from planner.planning import ActionPlan
+from planner.planning import ActionPlan, ActionPlanSelector, DomainBuilder
 
 
 class TestActionPlan:
@@ -43,3 +43,65 @@ class TestActionPlan:
 
     def test_can_include(self, action_plan, imposible_task):
         assert not action_plan.can_include(imposible_task)
+
+
+class TestDomainBuilder:
+
+    @staticmethod
+    def is_plan_possible(plan):
+        all_resources = list(chain(*(t.resources for t in plan.tasks)))
+        return len(plan.required_resources) == len(all_resources)
+
+    @pytest.fixture()
+    def tasks(self):
+        return TasksFactory.build_batch(5)
+
+    @pytest.fixture()
+    def full_tree(self, tasks):
+        domain = [ActionPlan(tasks=[t]) for t in tasks]
+        for node in domain:
+            candidate_tasks = filter(lambda t: t not in node.tasks, tasks)
+            for task in candidate_tasks:
+                new_node = ActionPlan(tasks=node.tasks + [task])
+                domain.append(new_node)
+        return domain
+
+    @pytest.fixture()
+    def possible_plans(self, full_tree):
+        return [node for node in full_tree if self.is_plan_possible(node)]
+
+    @pytest.fixture()
+    def domain(self, tasks):
+        build_domain = DomainBuilder()
+        return build_domain(tasks)
+
+    def test_domain_exclude_imposible_action_plans(self, possible_plans, domain):
+        assert len(possible_plans) == len(domain)
+        for node in domain:
+            assert self.is_plan_possible(node)
+
+
+class TestActionPlanSelector:
+
+    @pytest.fixture(autouse=True)
+    def setup(self, mocker, domain):
+        mocker.patch(
+            'planner.planning.DomainBuilder.__call__',
+            return_value=domain
+        )
+        self.select_action_plan = ActionPlanSelector()
+
+    @pytest.fixture()
+    def domain(self):
+        return [
+            ActionPlan(tasks=TasksFactory.build_batch(2, payoff=100)),
+            ActionPlan(tasks=TasksFactory.build_batch(2, payoff=1))
+        ]
+
+    @pytest.fixture()
+    def tasks(self):
+        return TasksFactory.build_batch(5)
+
+    def test_selects_higher_reward_action_plan(self, tasks):
+        action_plan = self.select_action_plan(tasks)
+        assert action_plan.reward == 200
