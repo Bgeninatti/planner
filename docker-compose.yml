@@ -1,0 +1,11 @@
+version: '3.7'
+
+services:
+  planner:
+    container_name: planner
+    build: ./
+    command: gunicorn --bind 0.0.0.0:8000 "planner.wsgi:application"
+    volumes:
+      - ./planner:/usr/app/
+    ports:
+      - 8000:8000
