@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+
+    <title>Planner</title>
+  </head>
+  <body>
+
+    <div class="container">
+      <div class="row">
+        <div class="col">
+            <h1>Planner</h1>
+            <p>How to use: </p>
+            <ul>
+                <li>
+                    Upload a JSON file with your tasks definition.
+                    <p>The tasks definition must be a list with the following format: </p>
+                    <code>
+                        [
+                            {
+                                "name": "some string",
+                                "resources": ["list", "of", "strings"],
+                                "payoff": 1.0
+                            }
+                            ...
+                        ]
+                    </code>
+                    <p>A few sample tasks files can be found <a href="">here</a></p>
+                </li>
+                <li>Submit the file.</li>
+                <li>The best subset of tasks and excluded tasks will be displayed.</li>
+            </ul>
+        </div>
+        <div class="col">
+          <form method = "POST" enctype = "multipart/form-data">
+            <div class="mb-3">
+              <label for="tasks-file" class="form-label">Submit tasks</label>
+              <input type="file" name="tasks-file" class="form-control" id="tasks-file">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </form>
+        </div>
+      </div>
+
+      {% if context.error %}
+        <div class="alert alert-danger" role="alert">
+          {{context.error}}
+        </div>
+      {% endif %}
+
+      {% if context.result %}
+        <div class="row">
+          <div class="col">
+              <h4>Best subset of tasks</h4>
+              <code>
+                {{context.result.selected_tasks}}
+              </code>
+          </div>
+          <div class="col">
+              <h4>Excluded tasks</h4>
+              <code>
+                {{context.result.excluded_tasks}}
+              </code>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </body>
+</html>
