@@ -103,3 +103,18 @@ $ docker run -it planner_planner:latest bash
 ```
 $ pytest
 ```
+## Implementation notes
+
+The applied strategy consists in build all the possible subsets of tasks (a.k.a `ActionPlan`) that accomplish the 
+restriction of resources, and then select the one with a higher `reward`.
+
+The action plans domain is computed in the `planner.planning.DomainBuilder` class. The complexity of the
+the applied algorithm is less than `O(n!)` because the search is bounded by the amount of unique available resources.
+
+Only for the special case where the amount of unique available resources is equal to the number of tasks, and each task requires 
+only one resource, the complexity will be `O(n!)`.
+
+Also, the domain computation has high redundancy, because it will build the same combination of tasks in a different order, 
+but the order of the tasks doesn't matter in the context of this problem.
+
+These points are left as future improvements for the current implementation.
